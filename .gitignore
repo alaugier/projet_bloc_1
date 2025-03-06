@@ -12,6 +12,9 @@ __pycache__/
 *.exe
 *.7z
 *.json
+*.txt
+*.pdf
+*.ddb
 
 # Folder
 Archives/
@@ -19,6 +22,7 @@ MCD/
 PATH_TO_CHROME_PROFILE/
 
 # special files
+var_api.env
 registre-traitement-simplifie.ods
 
 # C extensions
