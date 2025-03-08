@@ -8,7 +8,6 @@ __pycache__/
 *.zip
 *.csv
 *.pkl
-*.ipynb
 *.exe
 *.7z
 *.json
@@ -20,6 +19,7 @@ __pycache__/
 Archives/
 MCD/
 PATH_TO_CHROME_PROFILE/
+Notebooks/
 
 # special files
 var_api.env
