@@ -1,6 +1,6 @@
 import os
 import unidecode
-import pyperclip as clip
+# import pyperclip as clip
 import pickle
 import numpy as np
 import pandas as pd
@@ -27,10 +27,9 @@ import warnings
 warnings.filterwarnings('ignore')
 pd.set_option('future.no_silent_downcasting', True)
 
-driver = webdriver.Chrome()
-options = webdriver.ChromeOptions()
+chrome_options = webdriver.ChromeOptions()
 
-service = Service('chromedriver.exe')
+service = Service('/mnt/c/Users/Utilisateur/Projet_Bloc_1/chromedriver.exe')
 
 ville = 'rennes'
 nb_page = 1
@@ -64,7 +63,7 @@ def find_links_ads():
     return n_i
 
 time.sleep(5)
-driver = webdriver.Chrome(service=service, options=options)
+driver = webdriver.Chrome(service=service, options=chrome_options)
 driver.execute_script("document.body.style.zoom='100%'")
 driver.get(f'https://www.paruvendu.fr/immobilier/vente/{ville}/?rechpv=1&tt=1&tbApp=1&tbDup=1&tbChb=1&tbLof=1&tbAtl=1&tbPla=1&tbMai=1&tbVil=1&tbCha=1&tbPro=1&tbHot=1&tbMou=1&tbFer=1&at=1&nbp0=99&pa=FR&lol=30&ray=50&codeINSEE=35XX0,')
 
@@ -75,7 +74,7 @@ while n>0:
     for i in range(n):
         print(i+1,'/', n)
         time.sleep(5)
-        driver = webdriver.Chrome(service=service, options=options)
+        driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.execute_script("document.body.style.zoom='100%'")
         driver.get(links_pages[i+nb_page-1])
         page_source_i = driver.page_source
@@ -85,7 +84,7 @@ while n>0:
         driver.close()
     time.sleep(5)
     nb_page+=n
-    driver = webdriver.Chrome(service=service, options=options)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.execute_script("document.body.style.zoom='100%'")
     driver.get(f'https://www.paruvendu.fr/immobilier/vente/{ville}/?rechpv=1&tt=1&tbApp=1&tbDup=1&tbChb=1&tbLof=1&tbAtl=1&tbPla=1&tbMai=1&tbVil=1&tbCha=1&tbPro=1&tbHot=1&tbMou=1&tbFer=1&at=1&nbp0=99&pa=FR&lol=30&ray=50&codeINSEE=35XX0,&p={nb_page}')
     n = find_links_pages()
@@ -99,10 +98,7 @@ ct = datetime.datetime.now()
 # Convert the ct result into a string
 st = str(ct.year)+'-'+str(ct.month)+'-'+str(ct.day)+'-'+str(ct.hour)+'-'+str(ct.minute)+'-'+str(ct.second)+'-'+str(ct.microsecond)
 
-# Build the dated file
-cur_path = 'C:\\Users\\Utilisateur\\Projet_bloc_1\\Archives\\'
-
-paru_vendu_listing_ads_path_filename = os.path.join(cur_path, 'paru_vendu_links_ads_rennes'+'_'+st+'.txt')
+paru_vendu_listing_ads_path_filename = '/mnt/c/Users/Utilisateur/Projet_Bloc_1/Archives/paru_vendu_links_ads_rennes'+'_'+st+'.txt'
 
 # Write file
 with open(paru_vendu_listing_ads_path_filename, 'w+', encoding="utf-8") as f:
@@ -121,7 +117,7 @@ f.close()
 # Get the date of latest updates from archives
 l = len('paru_vendu_links_ads_rennes_')
 lst_datetime = []
-for dirpath, dirnames, filenames in os.walk(r'C:\\Users\\Utilisateur\\Projet_bloc_1\\Archives\\'):
+for dirpath, dirnames, filenames in os.walk('/mnt/c/Users/Utilisateur/Projet_Bloc_1/Archives'):
     for filename in filenames:
         if 'paru_vendu_links_ads_rennes_' in filename:
             # print(filename)
@@ -144,10 +140,7 @@ print(latest_recorded_time)
 latest_recorded_time_to_string = latest_recorded_time.strftime('%Y-%m-%d-%H-%M-%S-%f').replace("-0", "-")
 print(latest_recorded_time_to_string)
 
-# Build the dated file (the current path is put herebelow when we start to run from the cell above after loading the libraries)
-cur_path = 'C:\\Users\\Utilisateur\\Projet_bloc_1\\Archives\\'
-
-latest_paru_vendu_ads_links_path_filename = os.path.join(cur_path, 'paru_vendu_links_ads_rennes'+'_'+latest_recorded_time_to_string+'.txt')
+latest_paru_vendu_ads_links_path_filename = '/mnt/c/Users/Utilisateur/Projet_Bloc_1/Archives/paru_vendu_links_ads_rennes'+'_'+latest_recorded_time_to_string+'.txt'
 print(latest_paru_vendu_ads_links_path_filename)
 
 # Store the appartment links into a list
@@ -190,18 +183,6 @@ for i in range(len(links_ads)):
 # Nombre total d'annonces
 N = len(links_ads)
 
-driver = webdriver.Chrome()
-
-# Configure Chrome options
-chrome_options = webdriver.ChromeOptions()
-#chrome_options.add_argument("--start-maximized") # Start browser maximized
-#chrome_options.add_argument("--incognito") # Open in incognito mode
-#chrome_options.add_argument("--disable-extensions") # Disable browser extensions
-
-# Create service and driver with options
-#service = Service(ChromeDriverManager().install())
-service = Service('chromedriver.exe')
-
 n = 50
 k = 1
 lst_title = []
@@ -211,7 +192,9 @@ lst_data_fields = []
 lst_annonceurs = []
 lst_dpe =[]
 
+# Extraction des données
 while k<=N//n:
+    time.sleep(10)
     for i in tqdm(range((k-1)*n, k*n)):
         try:
             time.sleep(5)
@@ -317,6 +300,115 @@ while k<=N//n:
             time.sleep(2)
     k+=1
 
+
+m = (k-1)*n
+
+# Extraction des donn{\'e}es residuelles
+for i in tqdm(range(m,N)):
+    try:
+        time.sleep(5)
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        driver.execute_script("document.body.style.zoom='100%'")
+        time.sleep(np.random.randint(1, 2))
+        driver.get(links_ads[i])
+        page_source_i = driver.page_source
+        soup_i = BeautifulSoup(page_source_i, "html.parser")
+        try:
+            lst_title.append(soup_i.find('meta', property="og:title").get('content'))
+        except Exception:
+            lst_title.append('')
+        try:
+            lst_short_description.append(soup_i.find('meta', property="og:description").get('content').replace('&nbsp;', ' '))
+        except Exception:
+            lst_short_description.append('')
+        try:
+            lst_long_description.append(soup_i.find('div', class_='txt_annonceauto txt_annoncetrunc').text.replace('\n','').replace('  ',''))
+        except Exception:
+            lst_long_description.append('')
+        try:
+            dict_data_fields_i = {'prix': soup_i.find('div', class_=['prixactionalerte-box','im12_hd_prix']).find('div').text.replace('\n', '')}
+            for data in soup_i.find_all('ul', class_='crit-alignbloc'):
+                for subdata in data.find_all('li'):
+                    if subdata.has_attr("class"):
+                        if subdata['class']==["nbp"]:
+                            dict_data_fields_i['nombre de pièces'] = subdata.text[:2].replace('\n', '').replace('\t','')
+                        else:
+                            dict_data_fields_i['surface habitable'] = subdata.text.replace('\n', '').replace('\t','')
+                    elif 'chambres' in subdata.text and 'Agencement' not in subdata.text:
+                        dict_data_fields_i['nombre de chambres'] = subdata.text[:2].replace('\n', '').replace('\t','')
+                    elif 'Extérieur' in subdata.text:
+                        ind_surft=1+find_last_index(subdata.find('span').text,':')
+                        dict_data_fields_i['surface terrain'] = subdata.find('span').text[ind_surft:].replace('\n', '').replace(' ', '').replace('\t','')
+                    elif 'Annexes' in subdata.text:
+                        dict_data_fields_i['Annexes'] = subdata.find('span').text.replace('\n', '').replace('\t','')
+                    elif 'Dépendance' in subdata.text:
+                        dict_data_fields_i['Dépendance'] = subdata.find('span').text.replace('\n', '').replace('\t','')
+                    elif 'Général' in subdata.text:
+                        for elem in subdata.find_all('span'):
+                            ind_elem = 1+find_last_index(elem.text, ':')
+                            dict_data_fields_i[elem.text[:ind_elem-1].replace('\n', '').replace(' ', '')] = elem.text[ind_elem:].replace('\n', '').lstrip().rstrip()
+                    elif 'Réf. annonce' in subdata.text:
+                        dict_data_fields_i['Réf. annonce'] = subdata.find('span').text.replace('\n', '').replace('\t','')
+                    elif 'Mise à jour' in subdata.text:
+                        dict_data_fields_i['Mise à jour'] = subdata.find('span').text.replace('\n', '').replace('\t','')
+                    else:
+                        if 'Agencement' not in subdata.text:
+                            dict_data_fields_i[subdata.text.replace('\n', '').replace('\t','')] = 1
+        except Exception:
+            dict_data_fields_i ={}
+        lst_data_fields.append(dict_data_fields_i)
+        try:
+            try:
+                dict_annonceur_i = {'nom_annonceur':unidecode.unidecode(soup_i.find('p', class_='ba-nameannonceur').text.replace('\n', '').replace('  ', ''))}
+            except Exception:
+                dict_annonceur_i = {'nom_annonceur':''}
+            try:
+                dict_annonceur_i.update({"lien de l'annonceur" : soup_i.find('div', class_='blocannonceur_linklist').find('a', {'target':'_blank'}).get('href')})
+                ind_0_i = find_last_index(dict_annonceur_i["lien de l'annonceur"],'-')
+                ind_1_i = find_last_index(dict_annonceur_i["lien de l'annonceur"][:ind_0_i],'-')
+                ind_2_i = 1+find_last_index(dict_annonceur_i["lien de l'annonceur"][:ind_0_i][:ind_1_i],'-')
+                dict_annonceur_i.update({"ville de l'annonceur" : dict_annonceur_i["lien de l'annonceur"][:ind_0_i][:ind_1_i][ind_2_i:]})  
+            except Exception:
+                dict_annonceur_i.update({"lien de l'annonceur" : '', "ville de l'annonceur" :''})
+            lst_annonceurs.append(dict_annonceur_i)   
+        except Exception:
+            lst_annonceurs.append({'nom_annonceur':'', "lien de l'annonceur" : '', "ville de l'annonceur" :''})
+        try:
+            dict_dpe_i = {} 
+            for data in soup_i.find_all('div', class_="DPE_greyPadd"):
+                for subdata in data.find_all('div', class_='DPE_ng_flex'):
+                    for elem in subdata.find_all('span'):
+                        if 'NoteActive' in elem['class']:
+                            dict_dpe_i['étiquette DPE'] = elem.text
+                        else:
+                            dict_dpe_i['étiquette DPE'] = soup_i.find('div', attrs={'class': lambda x: x.startswith('DPE_consEnerNote NoteEnerg') if x else ''}).text
+            try:
+                dict_dpe_i.update({'consommation énergétique':soup_i.find('div', class_='DPE_consEnerTxt newDPE').find('span').text})
+            except Exception:
+                dict_dpe_i.update({'consommation énergétique':''})
+            try:
+                dict_dpe_i.update({'étiquette GPE':soup_i.find('div', class_='DPE_effSerreGlob newDPE_glob').find('div').text})
+            except Exception:
+                dict_dpe_i.update({'étiquette GPE':''})
+            try:
+                dict_dpe_i.update({'émission GPE':soup_i.find('div', class_='DPE_effSerreTxt').find('span').text})
+            except Exception:
+                dict_dpe_i.update({'émission GPE':''})
+            try:
+                dict_dpe_i.update({'date du bilan DPE':soup_i.find('p', class_='mentions_detailimmo m-0 text-center').text.replace('Fait le :', '').lstrip()})
+            except Exception:
+                dict_dpe_i.update({'date du bilan DPE':''})
+        except Exception:
+            dict_dpe_i = {'étiquette DPE':'', 'consommation énergétique':'', 'étiquette GPE':'', 'émission GPE':'', 'date du bilan DPE':''}
+        lst_dpe.append(dict_dpe_i)
+    except Exception as ex:
+        time.sleep(3)
+        print(ex)
+    finally:
+        driver.quit()
+        time.sleep(2)
+
+
 # Codes postaux des logements
 lst_zip_codes = []
 for title in lst_title:
@@ -376,63 +468,35 @@ ct = datetime.datetime.now()
 # Convert the ct result into a string
 st = str(ct.year)+'-'+str(ct.month)+'-'+str(ct.day)+'-'+str(ct.hour)+'-'+str(ct.minute)+'-'+str(ct.second)+'-'+str(ct.microsecond)
 
-df.to_csv('paru_vendu_ventes_logements_rennes_'+st+'.csv')
+df.to_csv('/mnt/c/Users/Utilisateur/Projet_Bloc_1/paru_vendu_ventes_logements_rennes_'+st+'.csv')
 
 # Save lists of data
-with open('lst_title_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_title_rennes.pkl', 'wb') as f:
     pickle.dump(lst_title, f)
 
-with open('lst_short_description_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_short_description_rennes.pkl', 'wb') as f:
     pickle.dump(lst_short_description, f)
 
-with open('lst_long_description_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_long_description_rennes.pkl', 'wb') as f:
     pickle.dump(lst_long_description, f)
 
-with open('lst_short_description_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_short_description_rennes.pkl', 'wb') as f:
     pickle.dump(lst_short_description, f)
 
-with open('lst_cities_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_cities_rennes.pkl', 'wb') as f:
     pickle.dump(lst_cities, f)
 
-with open('lst_zip_codes_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_zip_codes_rennes.pkl', 'wb') as f:
     pickle.dump(lst_zip_codes, f)
 
-with open('lst_links_ads_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_links_ads_rennes.pkl', 'wb') as f:
     pickle.dump(links_ads, f)
 
-with open('lst_data_fields_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_data_fields_rennes.pkl', 'wb') as f:
     pickle.dump(lst_data_fields, f)
 
-with open('lst_annonceurs_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_annonceurs_rennes.pkl', 'wb') as f:
     pickle.dump(lst_annonceurs, f)
 
-with open('lst_data_dpe_rennes.pkl', 'wb') as f:
+with open('/mnt/c/Users/Utilisateur/Projet_Bloc_1/lst_data_dpe_rennes.pkl', 'wb') as f:
     pickle.dump(lst_dpe, f)
-
-# Open lists of data
-with open('lst_title_rennes.pkl', 'rb') as f:
-    lst_title = pickle.load(f)
-
-with open('lst_short_description_rennes.pkl', 'rb') as f:
-    lst_short_description = pickle.load(f)
-
-with open('lst_long_description_rennes.pkl', 'rb') as f:
-    lst_long_description = pickle.load(f)
-
-with open('lst_cities_rennes.pkl', 'rb') as f:
-    lst_cities = pickle.load(f)
-
-with open('lst_zip_codes_rennes.pkl', 'rb') as f:
-    lst_zip_codes = pickle.load(f)
-
-with open('lst_links_ads_rennes.pkl', 'rb') as f:
-    links_ads = pickle.load(f)
-
-with open('lst_data_fields_rennes.pkl', 'rb') as f:
-    lst_data_fields = pickle.load(f)
-
-with open('lst_annonceurs_rennes.pkl', 'rb') as f:
-    lst_annonceurs = pickle.load(f)
-
-with open('lst_data_dpe_rennes.pkl', 'rb') as f:
-    lst_dpe = pickle.load(f)
