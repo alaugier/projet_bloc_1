@@ -22,6 +22,10 @@ PATH_TO_CHROME_PROFILE/
 Notebooks/
 
 # special files
+Quickstart_API_Donnees_foncieres.ipynb
+Try_code.ipynb
+test_api.py
+test_crontab.py
 var_api.env
 registre-traitement-simplifie.ods
 
