@@ -5,6 +5,37 @@ import os
 from datetime import datetime
 import io
 from geopy.distance import geodesic
+import logging
+import sys
+
+# Configuration du logging avec encodage UTF-8
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("mongodb_import.log", encoding='utf-8'),
+        logging.StreamHandler(sys.stdout if hasattr(sys.stdout, 'encoding') else None)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+def windows_to_wsl_path(windows_path):
+    """
+    Convertit un chemin Windows en chemin WSL.
+    
+    Args:
+        windows_path (str): Chemin au format Windows (ex: C:\\Users\\...)
+        
+    Returns:
+        str: Chemin au format WSL (ex: /mnt/c/Users/...)
+    """
+    # Supprimer les doubles backslashes et extraire la lettre du lecteur
+    clean_path = windows_path.replace('\\\\', '\\')
+    if ':' in clean_path:
+        drive, rest = clean_path.split(':', 1)
+        # Convertir au format WSL: /mnt/c/...
+        return f"/mnt/{drive.lower()}{rest.replace('\\', '/')}"
+    return windows_path
 
 session = requests.Session()  # Création d'une session
 
@@ -40,15 +71,26 @@ def charger_villes_rennes(fichier_csv):
     df_villes = pd.read_csv(fichier_csv)
     return df_villes
 
-# Charger les données du CSV des codes INSEE pour les villes
-def charger_codes_insee(url):
-    # Télécharger le fichier CSV à l'URL donnée
-    response = requests.get(url)
-    data = response.text
-    
-    # Utiliser io.StringIO pour lire le CSV à partir du texte
-    df_insee = pd.read_csv(io.StringIO(data), sep=';', encoding='latin-1')
-    return df_insee
+# Obtenir les données du CSV des codes INSEE pour les villes
+def charger_codes_insee_depuis_url(url):
+    """
+    Charge les données du CSV des codes INSEE depuis une URL spécifique.
+    """
+    try:
+        # Télécharger le fichier CSV à l'URL donnée
+        response = requests.get(url, timeout=10)  # Timeout de 10 secondes
+        if response.status_code == 200:
+            data = response.text
+            
+            # Utiliser io.StringIO pour lire le CSV à partir du texte
+            df_insee = pd.read_csv(io.StringIO(data), sep=';', encoding='latin-1')
+            return df_insee
+        else:
+            print(f"Erreur lors du téléchargement: code {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Erreur lors du chargement depuis {url}: {e}")
+        return None
 
 # Extraire les coordonnées de la colonne 'coordinates'
 def extraire_coordonnees(row):
@@ -161,9 +203,21 @@ def extract_donnees_foncieres_communes(codes_insee, annee_debut=2018, annee_fin=
 fichier_villes_rennes = 'cities_around_rennes.csv'  # Remplace par ton fichier
 df_villes = charger_villes_rennes(fichier_villes_rennes)
 
-# Charger les codes INSEE des villes
-url_codes_insee = 'https://www.data.gouv.fr/fr/datasets/r/170ec28c-cd4a-4ce4-bac5-f1d8243cd7bb'
-df_insee = charger_codes_insee(url_codes_insee)
+# URL par défaut pour les codes INSEE des villes
+url_par_defaut = 'https://www.data.gouv.fr/fr/datasets/r/170ec28c-cd4a-4ce4-bac5-f1d8243cd7bb'
+
+# Charger les données directement avec l'URL par défaut
+print(f"Tentative de chargement des codes INSEE depuis: {url_par_defaut}")
+df_insee = charger_codes_insee_depuis_url(url_par_defaut)
+
+# Vérifier si le chargement a réussi
+if df_insee is not None:
+    print(f"Chargement des codes INSEE réussi: {len(df_insee)} entrées trouvées")
+    # Continuer avec le reste de votre code...
+else:
+    print("Impossible de charger les codes INSEE. Arrêt du script.")
+    import sys
+    sys.exit(1)
 
 # Coordonner de Rennes (latitude, longitude)
 rennes_coords = (48.1173, -1.6778)  # Exemple pour Rennes
@@ -217,8 +271,6 @@ def process_rennes_data(df_rennes, colonnes_mapping):
     df_cleaned = df_cleaned[colonnes_presentes]
     
     return df_cleaned
-
-
 
 # Exemple de colonnes_mapping
 colonne_mapping = {
@@ -279,7 +331,35 @@ colonne_mapping = {
 df_rennes_cleaned = process_rennes_data(df_rennes, colonne_mapping)
 
 # Sauvegarde des données obtenues dans un csv
-df_rennes_cleaned.to_csv('/mnt/c/Users/Utilisateur/Projet_Bloc_1/api_indicateurs_donnees_foncieres.csv')
+csv_filepath='C:\\Users\\Utilisateur\\Projet_Bloc_1\\api_indicateurs_donnees_foncieres.csv'
+client = None
+try:
+    # Conversion du chemin Windows en chemin WSL si nécessaire
+    wsl_filepath = windows_to_wsl_path(csv_filepath)
+    
+    # Vérifier si le chemin Windows existe d'abord
+    win_exists = os.path.exists(csv_filepath)
+    wsl_exists = os.path.exists(wsl_filepath)
+    
+    # Utiliser le chemin qui existe
+    if win_exists:
+        actual_path = csv_filepath
+        logger.info(f"Utilisation du chemin Windows: {csv_filepath}")
+        df_rennes_cleaned.to_csv(actual_path)
+    elif wsl_exists:
+        actual_path = wsl_filepath
+        logger.info(f"Utilisation du chemin WSL: {wsl_filepath}")
+        df_rennes_cleaned.to_csv(actual_path)
+    else:
+        logger.error(f"Le fichier n'existe ni sous Windows ({csv_filepath}) ni sous WSL ({wsl_filepath})")
+        print("0")
+except Exception as e:
+    logger.error(f"Erreur lors de l'importation des données: {str(e)}", exc_info=True)
+    print("0")
+finally:
+    # Fermeture de la connexion
+    if client:
+        client.close()
 
 def extract_geomutations_data(url_endpoint, token=None):
     """
@@ -315,4 +395,32 @@ colonnes_presentes = [col for col in colonnes_a_supprimer if col in df_geomutati
 df_geomutations = df_geomutations.drop(columns=colonnes_presentes)
 
 # Sauvegarde des données obtenues dans un csv
-df_geomutations.to_csv('/mnt/c/Users/Utilisateur/Projet_Bloc_1/api_geometries_donnees_foncieres.csv')
+csv_filepath='C:\\Users\\Utilisateur\\Projet_Bloc_1\\api_geometries_donnees_foncieres.csv'
+client = None
+try:
+    # Conversion du chemin Windows en chemin WSL si nécessaire
+    wsl_filepath = windows_to_wsl_path(csv_filepath)
+    
+    # Vérifier si le chemin Windows existe d'abord
+    win_exists = os.path.exists(csv_filepath)
+    wsl_exists = os.path.exists(wsl_filepath)
+    
+    # Utiliser le chemin qui existe
+    if win_exists:
+        actual_path = csv_filepath
+        logger.info(f"Utilisation du chemin Windows: {csv_filepath}")
+        df_rennes_cleaned.to_csv(actual_path)
+    elif wsl_exists:
+        actual_path = wsl_filepath
+        logger.info(f"Utilisation du chemin WSL: {wsl_filepath}")
+        df_rennes_cleaned.to_csv(actual_path)
+    else:
+        logger.error(f"Le fichier n'existe ni sous Windows ({csv_filepath}) ni sous WSL ({wsl_filepath})")
+        print("0")
+except Exception as e:
+    logger.error(f"Erreur lors de l'importation des données: {str(e)}", exc_info=True)
+    print("0")
+finally:
+    # Fermeture de la connexion
+    if client:
+        client.close()
