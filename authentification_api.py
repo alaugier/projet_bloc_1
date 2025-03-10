@@ -12,7 +12,7 @@ from bson.json_util import dumps
 import json
 
 # Chargement des variables d'environnement
-load_dotenv('var.env')
+load_dotenv('.env')
 SECRET_KEY = os.getenv("SECRET_KEY")
 API_PASSWORD = os.getenv("API_PASSWORD")
 host = os.getenv('host')
