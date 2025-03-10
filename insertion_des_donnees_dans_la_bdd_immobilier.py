@@ -192,8 +192,42 @@ if 'pompadour' in lst_ville_agences_dif_logements:
 print(lst_ville_agences_dif_logements, len(lst_ville_agences_dif_logements))
 
 # Récupération des codes postaux des villes
-url = "https://www.data.gouv.fr/fr/datasets/r/9713f203-7703-4f86-8b95-64446d7132ee"
-df_zip_codes = pd.read_csv(url, sep=';', encoding='latin-1')
+# Obtenir les données du CSV des codes INSEE pour les villes
+def charger_codes_insee_depuis_url(url):
+    """
+    Charge les données du CSV des codes INSEE depuis une URL spécifique.
+    """
+    try:
+        # Télécharger le fichier CSV à l'URL donnée
+        response = requests.get(url, timeout=10)  # Timeout de 10 secondes
+        if response.status_code == 200:
+            data = response.text
+            
+            # Utiliser io.StringIO pour lire le CSV à partir du texte
+            df_insee = pd.read_csv(io.StringIO(data), sep=';', encoding='latin-1')
+            return df_insee
+        else:
+            print(f"Erreur lors du téléchargement: code {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Erreur lors du chargement depuis {url}: {e}")
+        return None
+
+# URL par défaut pour les codes INSEE des villes (à mettre à jour si besoin)
+url_par_defaut = "https://www.data.gouv.fr/fr/datasets/r/9713f203-7703-4f86-8b95-64446d7132ee"
+
+# Charger les données directement avec l'URL par défaut
+print(f"Tentative de chargement des codes INSEE depuis: {url_par_defaut}")
+df_zip_codes = charger_codes_insee_depuis_url(url_par_defaut)
+
+# Vérifier si le chargement a réussi
+if df_zip_codes is not None:
+    print(f"Chargement des codes INSEE réussi: {len(df_zip_codes)} entrées trouvées")
+    # Continuer avec le reste de votre code...
+else:
+    print("Impossible de charger les codes INSEE. Arrêt du script.")
+    import sys
+    sys.exit(1)
 
 code_postal_ville_agences_dif_logements = []
 for i in range(len(lst_ville_agences_dif_logements)):
