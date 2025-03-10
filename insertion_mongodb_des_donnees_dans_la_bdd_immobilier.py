@@ -35,7 +35,7 @@ def sql_cnx(list, create_cursor=True):
     except Exception as e:
         print("Une erreur est survenue : \n", e)
     
-load_dotenv('var.env')
+load_dotenv('.env')
 host = os.getenv('host')
 database = os.getenv('database')
 user = os.getenv('user')
