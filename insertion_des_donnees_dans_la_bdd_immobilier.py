@@ -61,7 +61,7 @@ def sql_cnx(list, create_cursor=True):
         print("Une erreur est survenue : \n", e)
     
 # Chargement des variables d'environnement pour la connexion à la base de données
-load_dotenv('var.env')
+load_dotenv('.env')
 host = os.getenv('host')
 database = os.getenv('database')
 user = os.getenv('user')
@@ -296,7 +296,7 @@ def charger_codes_insee_depuis_url(url):
         return None
 
 # URL par défaut pour les codes INSEE des villes
-url_par_defaut = "https://www.data.gouv.fr/fr/datasets/r/9713f203-7703-4f86-8b95-64446d7132ee"
+url_par_defaut = "https://www.data.gouv.fr/fr/datasets/r/170ec28c-cd4a-4ce4-bac5-f1d8243cd7bb"
 
 # Charger les données directement avec l'URL par défaut
 print(f"Tentative de chargement des codes INSEE depuis: {url_par_defaut}")
