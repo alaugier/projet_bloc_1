@@ -13,6 +13,7 @@ Ce projet vise à automatiser l'extraction, le stockage et l'analyse de données
 
     insertion_des_donnees_dans_la_bdd_immobilier.py : Insertion des données collectées dans la base de données immobilière.
     lecture_des_donnees_dans_la_bdd_immobilier.py : Lecture et extraction des données stockées dans la base de données immobilière.
+    insertion_mongodb_des_donnees_dans_la_bdd_immobilier.py : Importation de données de biens immobiliers dans MongoDB.
     wikidata_api_dvf_mongodb_import_script.py : Importation et fusion des données extraites de l'API de la Cerema et de Wikidata dans MongoDB.
 
 #### API et authentification
