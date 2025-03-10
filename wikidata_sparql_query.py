@@ -3,6 +3,38 @@ import pandas as pd
 from SPARQLWrapper import SPARQLWrapper, JSON
 import time
 from geopy.distance import geodesic
+import logging
+import sys
+import os
+
+# Configuration du logging avec encodage UTF-8
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("mongodb_import.log", encoding='utf-8'),
+        logging.StreamHandler(sys.stdout if hasattr(sys.stdout, 'encoding') else None)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+def windows_to_wsl_path(windows_path):
+    """
+    Convertit un chemin Windows en chemin WSL.
+    
+    Args:
+        windows_path (str): Chemin au format Windows (ex: C:\\Users\\...)
+        
+    Returns:
+        str: Chemin au format WSL (ex: /mnt/c/Users/...)
+    """
+    # Supprimer les doubles backslashes et extraire la lettre du lecteur
+    clean_path = windows_path.replace('\\\\', '\\')
+    if ':' in clean_path:
+        drive, rest = clean_path.split(':', 1)
+        # Convertir au format WSL: /mnt/c/...
+        return f"/mnt/{drive.lower()}{rest.replace('\\', '/')}"
+    return windows_path
 
 def query_wikidata(query):
     """Exécute une requête SPARQL sur l'endpoint Wikidata et renvoie les résultats."""
@@ -171,9 +203,37 @@ def main():
     df = pd.DataFrame(cities)
     
     # Sauvegarde en CSV
-    df.to_csv('cities_around_rennes.csv', index=False)
-    print(f"Données sauvegardées pour {len(cities)} villes.")
-    
+    csv_filepath='C:\\Users\\Utilisateur\\Projet_Bloc_1\\cities_around_rennes.csv'
+    client = None
+    try:
+        # Conversion du chemin Windows en chemin WSL si nécessaire
+        wsl_filepath = windows_to_wsl_path(csv_filepath)
+        
+        # Vérifier si le chemin Windows existe d'abord
+        win_exists = os.path.exists(csv_filepath)
+        wsl_exists = os.path.exists(wsl_filepath)
+        
+        # Utiliser le chemin qui existe
+        if win_exists:
+            actual_path = csv_filepath
+            logger.info(f"Utilisation du chemin Windows: {csv_filepath}")
+            df.to_csv(actual_path)
+            print(f"Données sauvegardées pour {len(cities)} villes.")
+        elif wsl_exists:
+            actual_path = wsl_filepath
+            logger.info(f"Utilisation du chemin WSL: {wsl_filepath}")
+            df.to_csv(actual_path)
+            print(f"Données sauvegardées pour {len(cities)} villes.")
+        else:
+            logger.error(f"Le fichier n'existe ni sous Windows ({csv_filepath}) ni sous WSL ({wsl_filepath})")
+            print("0")
+    except Exception as e:
+        logger.error(f"Erreur lors de l'importation des données: {str(e)}", exc_info=True)
+        print("0")
+    finally:
+        # Fermeture de la connexion
+        if client:
+            client.close()
     return df
 
 if __name__ == "__main__":
