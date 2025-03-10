@@ -11,7 +11,7 @@ __pycache__/
 *.exe
 *.7z
 *.json
-*.txt
+*.docx
 *.pdf
 *.ddb
 
