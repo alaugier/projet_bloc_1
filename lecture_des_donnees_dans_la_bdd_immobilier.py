@@ -46,7 +46,7 @@ def sql_cnx(list, create_cursor=True):
         return None, None
 
 # Chargement des variables d'environnement depuis le fichier .env
-load_dotenv('var.env')
+load_dotenv('.env')
 
 # Récupération des informations de connexion depuis les variables d'environnement
 host = os.getenv('host')  # Hôte de la base de données
